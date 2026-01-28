@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 venv/
 .env
+debug.py
 
 # --- Mac System Files ---
 .DS_Store
