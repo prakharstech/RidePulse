@@ -2,7 +2,10 @@ import pandas as pd
 from scipy import stats
 import json
 import os
+from dotenv import load_dotenv
 import requests 
+load_dotenv()
+
 
 # CONFIG
 REFERENCE_DATA_PATH = "./data/raw/jan_data.csv"
@@ -10,11 +13,11 @@ CURRENT_DATA_PATH = "./data/raw/feb_data.csv"
 
 # --- GITHUB CONFIGURATION ---
 # 1. Enter your GitHub Username
-GITHUB_USER = "YOUR_GITHUB_USERNAME"  
+GITHUB_USER = "prakharstech"  
 # 2. Enter the Repo Name (e.g., RidePulse)
 GITHUB_REPO = "RidePulse"
 # 3. Enter your Personal Access Token
-GITHUB_TOKEN = "YOUR_GITHUB_TOKEN" 
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 def trigger_retraining():
     print("🚀 Initiating Cloud Retraining Pipeline...")
