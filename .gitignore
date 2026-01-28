@@ -1,0 +1,17 @@
+# --- Python & Venv ---
+__pycache__/
+*.pyc
+venv/
+.env
+
+# --- Mac System Files ---
+.DS_Store
+
+# --- Project Data & Models ---
+# We ignore data/models because they are large (and we recreate them)
+data/
+models/
+
+# --- IDE Settings ---
+.vscode/
+.idea/
