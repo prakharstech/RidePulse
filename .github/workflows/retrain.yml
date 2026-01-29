@@ -1,4 +1,15 @@
-steps:
+name: Self-Healing Pipeline
+
+on:
+  repository_dispatch:
+    types: [retrain_model_event]
+  workflow_dispatch:
+
+jobs:
+  retrain_model:
+    runs-on: ubuntu-latest
+    
+    steps:
       - name: 1. Checkout Code
         uses: actions/checkout@v3
 
@@ -8,15 +19,16 @@ steps:
           python-version: '3.10'
 
       - name: 3. Install Dependencies
-        # Added pyarrow and fastparquet for the downloader
+        # We need pandas, scikit-learn, xgboost, pyarrow (for parquet), and fastparquet
         run: |
           pip install pandas scikit-learn joblib xgboost requests scipy pyarrow fastparquet
 
       - name: 4. Ingest Data (Q1 2023)
-        # This downloads the 1M rows directly to the cloud runner
+        # This downloads the data directly to the cloud runner
         run: python src/data_ingestion.py
 
       - name: 5. Retrain Model
+        # This trains on the newly downloaded data
         run: python src/train.py
 
       - name: 6. Save Model as Artifact
