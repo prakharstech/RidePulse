@@ -4,14 +4,13 @@ __pycache__/
 venv/
 .env
 debug.py
+data/
 
 # --- Mac System Files ---
 .DS_Store
 
 # --- Project Data & Models ---
 # We ignore data/models because they are large (and we recreate them)
-data/
-models/
 
 # --- IDE Settings ---
 .vscode/

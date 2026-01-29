@@ -1,52 +1,53 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor  # <--- The fix: No external dependencies
+import joblib
+from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
-import joblib
 import os
 
-# CONFIG
-DATA_PATH = "./data/raw/jan_data.csv"
-MODEL_PATH = "./models/model_v1.joblib"
-
-def preprocess_data(df):
-    # Convert string dates to datetime objects
-    df['tpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'])
-    
-    # Feature Engineering
-    df['hour'] = df['tpep_pickup_datetime'].dt.hour
-    df['day_of_week'] = df['tpep_pickup_datetime'].dt.dayofweek
-    
-    # Select only numeric features
-    features = ['PULocationID', 'trip_distance', 'hour', 'day_of_week']
-    target = 'fare_amount'
-    
-    return df[features], df[target]
+# UPDATE: Point to the new big file
+DATA_PATH = "data/raw/training_data.csv" 
+MODEL_PATH = "models/model_v1.joblib"
 
 def train():
-    print("Loading data...")
+    print("🚀 Starting Production Training (XGBoost)...")
+    
+    if not os.path.exists(DATA_PATH):
+        print(f"❌ Error: Data file not found at {DATA_PATH}")
+        print("   -> Run 'python src/ingest_data.py' first!")
+        return
+
+    # 1. Load Data
+    print("   -> Loading dataset...")
     df = pd.read_csv(DATA_PATH)
     
-    print("Preprocessing...")
-    X, y = preprocess_data(df)
+    # 2. Basic Preprocessing (Remove weird outliers)
+    # Filter: Trips > 0 miles and Fare < $200 (remove bad data)
+    df = df[(df['trip_distance'] > 0) & (df['fare_amount'] > 0) & (df['fare_amount'] < 200)]
     
-    # Split Data
+    # 3. Features & Target
+    X = df[['trip_distance']]
+    y = df['fare_amount']
+    
+    # 4. Train/Test Split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    print("Training Random Forest Model (This might take 10-20 seconds)...")
-    # Using Random Forest - it's robust and easy to install
-    model = RandomForestRegressor(n_estimators=50, max_depth=10, random_state=42, n_jobs=-1)
+    # 5. Initialize XGBoost
+    model = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+    
+    # 6. Train
+    print(f"   -> Training on {len(X_train)} rows...")
     model.fit(X_train, y_train)
     
-    # Evaluate
+    # 7. Evaluate
     predictions = model.predict(X_test)
     mae = mean_absolute_error(y_test, predictions)
-    print(f"✅ Model Trained! Mean Absolute Error: ${mae:.2f}")
+    print(f"   -> Model MAE: ${mae:.2f}")
     
-    # Save Model
+    # 8. Save
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
     joblib.dump(model, MODEL_PATH)
-    print(f"💾 Model saved to {MODEL_PATH}")
+    print("✅ Model Saved.")
 
 if __name__ == "__main__":
     train()

@@ -1,18 +1,4 @@
-name: Self-Healing Pipeline
-
-on:
-  # This listens for the signal from your laptop
-  repository_dispatch:
-    types: [retrain_model_event]
-  
-  # This allows you to click a "Run" button on the website manually to test it
-  workflow_dispatch:
-
-jobs:
-  retrain_model:
-    runs-on: ubuntu-latest
-    
-    steps:
+steps:
       - name: 1. Checkout Code
         uses: actions/checkout@v3
 
@@ -22,16 +8,18 @@ jobs:
           python-version: '3.10'
 
       - name: 3. Install Dependencies
-        # We install exactly what your script needs
+        # Added pyarrow and fastparquet for the downloader
         run: |
-          pip install pandas scikit-learn joblib xgboost requests scipy
+          pip install pandas scikit-learn joblib xgboost requests scipy pyarrow fastparquet
 
-      - name: 4. Retrain Model
-        # This runs the training script in the cloud
+      - name: 4. Ingest Data (Q1 2023)
+        # This downloads the 1M rows directly to the cloud runner
+        run: python src/data_ingestion.py
+
+      - name: 5. Retrain Model
         run: python src/train.py
 
-      - name: 5. Save Model as Artifact
-        # This saves the model file so you can download it from the GitHub UI
+      - name: 6. Save Model as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: new-model-v2
