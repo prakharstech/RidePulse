@@ -22,7 +22,7 @@ graph LR
   C -->|Drift Detected| E[Trigger GitHub Action]
   E -->|Retrain & Deploy| F[GitHub Actions Runner]
   F -->|Push Image| G[AWS ECR]
-  G -->|Update Code| B
+  G -->|Update Code| B```
 
   ## 🚀 Key Features
 
@@ -113,7 +113,7 @@ docker build --platform linux/amd64 --provenance=false -t ridepulse-repo .
 
 # Run the container
 docker run -p 8080:8080 ridepulse-repo
-
+```
 ## ☁️ Cloud Deployment (AWS)
 
 Deployment is handled automatically via GitHub Actions.
