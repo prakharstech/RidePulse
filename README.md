@@ -124,8 +124,4 @@ Deployment is handled automatically via GitHub Actions.
 
 ---
 
-## 📜 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
 **Author:** [Prakhar Srivastava](https://github.com/prakharstech)
