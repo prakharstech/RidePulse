@@ -1,61 +1,58 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from mangum import Mangum
 import joblib
 import pandas as pd
 import os
 
-# Initialize the App
-app = FastAPI(title="RidePulse API", version="1.0")
+app = FastAPI(title="RidePulse API", version="2.0")
 
-# --- 1. Load the Model on Startup ---
-MODEL_PATH = "./models/model_v1.joblib"
+# CONFIG
+MODEL_PATH = "models/model_v1.joblib"
 
+# Load Model
 if not os.path.exists(MODEL_PATH):
-    raise RuntimeError(f"Model not found at {MODEL_PATH}. Did you run train.py?")
+    print(f"⚠️ Warning: Model not found at {MODEL_PATH}.")
+    model = None
+else:
+    model = joblib.load(MODEL_PATH)
+    print("✅ Model loaded successfully.")
 
-# Load the model into memory
-model = joblib.load(MODEL_PATH)
-print("✅ Model loaded successfully.")
-
-# --- 2. Define the Input Data Structure ---
-class RideData(BaseModel):
-    PULocationID: int   # The Pickup Zone ID (e.g., 100)
-    trip_distance: float # Distance in miles
-    hour: int           # Hour of day (0-23)
+# --- NEW INPUT SCHEMA (Matches the new 5 features) ---
+class RideInput(BaseModel):
+    trip_distance: float
+    PULocationID: int   # Pickup Zone (e.g., 132 for JFK Airport)
+    DOLocationID: int   # Dropoff Zone (e.g., 230 for Times Square)
+    hour: int           # 0-23 (e.g., 17 for 5 PM)
     day_of_week: int    # 0=Monday, 6=Sunday
-
-class PredictionOut(BaseModel):
-    predicted_fare: float
-    model_version: str
-
-# --- 3. Define the Endpoints ---
 
 @app.get("/")
 def home():
-    return {"message": "RidePulse Inference API is Live 🟢"}
+    return {"message": "RidePulse Multi-Feature API is Live 🟢"}
 
-@app.post("/predict", response_model=PredictionOut)
-def predict(data: RideData):
-    """
-    Takes ride details and returns predicted fare using the ML model.
-    """
+@app.post("/predict")
+def predict(data: RideInput):
+    if not model:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
     try:
-        # Convert input data to DataFrame (because the model expects a DataFrame)
-        # We use data.model_dump() for Pydantic v2, or data.dict() for v1
-        input_data = {
-            "PULocationID": [data.PULocationID],
-            "trip_distance": [data.trip_distance],
-            "hour": [data.hour],
-            "day_of_week": [data.day_of_week]
-        }
-        features = pd.DataFrame(input_data)
+        # Create DataFrame with EXACT columns used in training
+        input_df = pd.DataFrame([{
+            "trip_distance": data.trip_distance,
+            "PULocationID": data.PULocationID,
+            "DOLocationID": data.DOLocationID,
+            "hour": data.hour,
+            "day_of_week": data.day_of_week
+        }])
         
-        # Make prediction
-        prediction = model.predict(features)
+        # Make Prediction
+        prediction = model.predict(input_df)
         
         return {
-            "predicted_fare": round(float(prediction[0]), 2),
-            "model_version": "v1.0-random-forest"
+            "predicted_fare": float(prediction[0]),
+            "model_version": "v2-xgboost-multifeature"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+handler = Mangum(app)
