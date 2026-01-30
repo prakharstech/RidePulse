@@ -22,8 +22,8 @@ graph LR
   C -->|Drift Detected| E[Trigger GitHub Action]
   E -->|Retrain & Deploy| F[GitHub Actions Runner]
   F -->|Push Image| G[AWS ECR]
-  G -->|Update Code| B```
-
+  G -->|Update Code| B
+```
   ## 🚀 Key Features
 
 * **Serverless Inference:** Deployed on **AWS Lambda** via Container Images (ECR) for auto-scaling and zero-idle costs.
