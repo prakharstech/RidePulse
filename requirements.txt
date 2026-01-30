@@ -7,3 +7,5 @@ uvicorn
 evidently
 requests
 joblib
+mangum
+boto3 
